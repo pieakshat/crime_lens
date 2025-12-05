@@ -1,67 +1,161 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Crime Lens - Emergency Detection & Alert Interface
 
-## Getting Started
+A Next.js application for visualizing crime data and sending automatic safety alerts when users enter high-risk zones.
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ and pnpm (or npm/yarn)
-- MongoDB database (local or MongoDB Atlas)
+- **Node.js** 18+ 
+- **pnpm** (or npm/yarn)
+- **MongoDB** database (local or MongoDB Atlas)
 
-### Setup
+### Installation & Setup
 
-1. **Install dependencies:**
+1. **Clone the repository and navigate to the project:**
+```bash
+cd crime_lens
+```
+
+2. **Install dependencies:**
 ```bash
 pnpm install
 ```
 
-2. **Configure Environment Variables:**
+3. **Create environment file:**
 
-Create a `.env.local` file in the root directory with the following variables:
+Create a `.env.local` file in the `crime_lens` directory with the following format:
 
 ```env
 # MongoDB Configuration (Required)
-# Get your MongoDB URI from: https://www.mongodb.com/cloud/atlas
-# Format: mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
-
-# Optional: Database name (defaults to 'crime_lens')
 MONGODB_DB_NAME=crime_lens
 
-# Twilio Configuration (for SMS OTP and SOS alerts - Optional)
+# Twilio Configuration (Optional - for SMS OTP and SOS alerts)
 TWILIO_ACCOUNT_SID=your_twilio_account_sid
 TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_VERIFY_SERVICE_SID=your_twilio_verify_service_sid
-TWILIO_PHONE_NUMBER=+1234567890  # Your Twilio phone number for sending SMS
+TWILIO_PHONE_NUMBER=+1234567890
 
 # Demo Mode (set to 'false' to disable demo mode)
 DEMO_MODE=true
 ```
 
-3. **Run the development server:**
+4. **Run the development server:**
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. **Open your browser:**
+Navigate to [http://localhost:3000](http://localhost:3000)
 
-### MongoDB Setup
+## 📋 Environment Variables
 
-#### Option 1: MongoDB Atlas (Cloud - Recommended)
+### Required Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `MONGODB_URI` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true&w=majority` |
+
+### Optional Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MONGODB_DB_NAME` | Database name | `crime_lens` |
+| `TWILIO_ACCOUNT_SID` | Twilio Account SID for SMS | - |
+| `TWILIO_AUTH_TOKEN` | Twilio Auth Token | - |
+| `TWILIO_VERIFY_SERVICE_SID` | Twilio Verify Service SID | - |
+| `TWILIO_PHONE_NUMBER` | Twilio phone number for sending SMS | - |
+| `DEMO_MODE` | Enable/disable demo mode | `true` |
+
+## 🗄️ MongoDB Setup
+
+### Option 1: MongoDB Atlas (Cloud - Recommended)
+
 1. Sign up at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
 2. Create a free cluster
-3. Create a database user
-4. Get your connection string and add it to `.env.local` as `MONGODB_URI`
+3. Create a database user with read/write permissions
+4. Whitelist your IP address (or use `0.0.0.0/0` for development)
+5. Get your connection string:
+   - Click "Connect" on your cluster
+   - Choose "Connect your application"
+   - Copy the connection string
+   - Replace `<password>` with your database user password
+6. Add the connection string to `.env.local` as `MONGODB_URI`
 
-#### Option 2: Local MongoDB
-1. Install MongoDB locally
-2. Start MongoDB service
-3. Use connection string: `mongodb://localhost:27017/crime_lens`
+**Example:**
+```env
+MONGODB_URI=mongodb+srv://myuser:mypassword@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+```
 
-### Database Collections
+### Option 2: Local MongoDB
 
-The application automatically creates two collections:
-- `otps` - Stores OTP codes with expiration times
-- `users` - Stores user information (phone, email, guardian phone, etc.)
+1. Install MongoDB locally ([Download](https://www.mongodb.com/try/download/community))
+2. Start MongoDB service:
+   ```bash
+   # macOS (using Homebrew)
+   brew services start mongodb-community
+   
+   # Linux
+   sudo systemctl start mongod
+   
+   # Windows
+   # MongoDB starts automatically as a service
+   ```
+3. Use connection string in `.env.local`:
+   ```env
+   MONGODB_URI=mongodb://localhost:27017/crime_lens
+   ```
+
+## 📦 Database Collections
+
+The application automatically creates the following collections:
+
+- **`otps`** - Stores OTP codes with expiration times (auto-cleaned)
+- **`users`** - Stores user information (phone, username, email, guardian phone, etc.)
+
+## 🔧 Configuration
+
+### Twilio Setup (Optional - for SMS features)
+
+1. Sign up at [Twilio](https://www.twilio.com/)
+2. Get your Account SID and Auth Token from the dashboard
+3. Create a Verify Service (for OTP) or use Messaging Service (for SOS)
+4. Get a phone number from Twilio
+5. Add credentials to `.env.local`
+
+**Note:** Without Twilio, the app runs in demo mode and shows OTP/SOS messages in the UI instead of sending SMS.
+
+## 🎮 Usage
+
+### Running the Application
+
+```bash
+# Development mode
+pnpm dev
+
+# Production build
+pnpm build
+pnpm start
+```
+
+### Accessing the Application
+
+- **Login Page:** http://localhost:3000/login
+- **Dashboard:** http://localhost:3000/dashboard
+
+### Demo Mode
+
+In demo mode (default):
+- OTP codes are displayed in the UI
+- SOS alerts show messages but don't send SMS
+- No Twilio configuration required
+- Perfect for testing and development
+
+To disable demo mode:
+```env
+DEMO_MODE=false
+```
 
 ## 🚨 SOS Alert System
 

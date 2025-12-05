@@ -108,10 +108,6 @@ export default function LoginPage() {
                     Emergency Detection & Alert Interface
                 </div>
 
-                <div className="bg-gray-800 border border-white p-4 mb-5 rounded text-xs text-center">
-                    DEMO MODE: Use any OTP or &quot;demo&quot; to login
-                </div>
-
                 <form onSubmit={handleSendOTP}>
                     <div className="mb-5">
                         <label htmlFor="username" className="block mb-2 text-sm font-medium">

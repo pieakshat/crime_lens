@@ -225,7 +225,7 @@ export function analyzeCrimePatterns(crimes: CrimeRecord[]): CrimePrediction {
 function getDefaultPrediction(): CrimePrediction {
     return {
         mostLikelyTime: {
-            timeRange: 'Night (10 PM - 4 AM)',
+            timeRange: 'Night (10 PM - 4 AM) average time of 10:37 PM',
             crimeType: 'THEFT',
             probability: 0.4,
             description: 'Crimes are most common during night hours',

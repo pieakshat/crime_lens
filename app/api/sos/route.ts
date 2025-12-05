@@ -76,9 +76,23 @@ Location: ${mapLink}`;
         const authToken = process.env.TWILIO_AUTH_TOKEN;
         const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 
+        // Debug logging for Vercel deployment
+        console.log(`[${new Date().toISOString()}] 🔧 Twilio Config Check:`, {
+            hasAccountSid: !!accountSid,
+            hasAuthToken: !!authToken,
+            hasPhoneNumber: !!twilioPhoneNumber,
+            demoMode: process.env.DEMO_MODE,
+        });
 
         const twilioConfigured = accountSid && authToken && twilioPhoneNumber;
+        // DEMO_MODE must be explicitly set to 'false' string to disable
         const DEMO_MODE = process.env.DEMO_MODE !== 'false';
+
+        console.log(`[${new Date().toISOString()}] 🔧 Twilio Status:`, {
+            configured: twilioConfigured,
+            demoMode: DEMO_MODE,
+            willSendSMS: twilioConfigured && !DEMO_MODE,
+        });
 
         if (twilioConfigured && !DEMO_MODE) {
             try {

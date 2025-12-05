@@ -77,15 +77,27 @@ export async function GET() {
             const recordLon = (lon && !isNaN(lon)) ? lon : (data.coordCount > 0 ? data.lonSum / data.coordCount : 0);
 
             // Parse time (format: HH.MM or HH:MM)
+            // Store as decimal hours (e.g., 1.11 = 1 hour 11 minutes = 1.183 hours)
             const timeStr = record['Time.of.Occurrence'] || '0';
-            const timeValue = parseFloat(timeStr.replace(':', '.'));
-            const hour = Math.floor(timeValue);
+            let timeInHours = 0;
+
+            if (timeStr.includes(':')) {
+                // Format: HH:MM
+                const [h, m] = timeStr.split(':').map(Number);
+                timeInHours = h + (m || 0) / 60;
+            } else {
+                // Format: HH.MM (decimal format where .MM is minutes)
+                const timeValue = parseFloat(timeStr);
+                const hour = Math.floor(timeValue);
+                const minutes = Math.round((timeValue - hour) * 100);
+                timeInHours = hour + minutes / 60;
+            }
 
             data.crimes.push({
                 crime: record.Crime || 'Unknown',
                 severity,
                 date: record['Date.of.Occurrence'] || '',
-                time: hour,
+                time: timeInHours, // Store as decimal hours for accurate averaging
                 lat: recordLat,
                 lon: recordLon,
             });

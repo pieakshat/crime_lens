@@ -129,6 +129,9 @@ export default function Sidebar({
                             <p className="text-xs mb-1">
                                 <span className="font-semibold">{selectedCity.prediction.mostLikelyTime.crimeType}</span> is most likely during{' '}
                                 <span className="font-semibold">{selectedCity.prediction.mostLikelyTime.timeRange}</span>
+                                {selectedCity.prediction.mostLikelyTime.averageTime && (
+                                    <> at an average time of <span className="font-semibold text-yellow-300">{selectedCity.prediction.mostLikelyTime.averageTime}</span></>
+                                )}
                             </p>
                             <p className="text-xs text-gray-400">
                                 Probability: {Math.round(selectedCity.prediction.mostLikelyTime.probability * 100)}%

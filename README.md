@@ -209,8 +209,88 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## 🚀 Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Prerequisites
+
+1. Push your code to GitHub/GitLab/Bitbucket
+2. Have a Vercel account ([Sign up](https://vercel.com/signup))
+
+### Deployment Steps
+
+1. **Import your project to Vercel:**
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Click "Add New Project"
+   - Import your repository
+
+2. **Configure Environment Variables:**
+
+   **CRITICAL:** Add all environment variables in Vercel's project settings:
+   
+   - Go to your project → Settings → Environment Variables
+   - Add the following variables:
+
+   ```env
+   # Required
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+   
+   # Optional but recommended
+   MONGODB_DB_NAME=crime_lens
+   
+   # For SMS features (SOS alerts and OTP)
+   TWILIO_ACCOUNT_SID=your_twilio_account_sid
+   TWILIO_AUTH_TOKEN=your_twilio_auth_token
+   TWILIO_VERIFY_SERVICE_SID=your_twilio_verify_service_sid
+   TWILIO_PHONE_NUMBER=+1234567890
+   
+   # IMPORTANT: Set to 'false' to enable SMS sending
+   DEMO_MODE=false
+   ```
+
+3. **Important Notes for Vercel:**
+   - **DEMO_MODE**: Must be set to `false` (as a string) to send real SMS. If not set or set to anything else, it defaults to `true` and SMS won't be sent.
+   - **Environment Variables**: Must be added in Vercel dashboard - `.env.local` files are NOT used in production
+   - **MongoDB Atlas**: Make sure your MongoDB Atlas IP whitelist includes Vercel's IP ranges (or use `0.0.0.0/0` for all IPs)
+
+4. **Deploy:**
+   - Vercel will automatically deploy on every push to your main branch
+   - Or click "Deploy" in the dashboard
+
+### Troubleshooting SMS on Vercel
+
+If SMS works locally but not on Vercel:
+
+1. **Check Environment Variables:**
+   - Go to Vercel Dashboard → Your Project → Settings → Environment Variables
+   - Verify all Twilio variables are set:
+     - `TWILIO_ACCOUNT_SID`
+     - `TWILIO_AUTH_TOKEN`
+     - `TWILIO_PHONE_NUMBER`
+   - **Most Important:** Set `DEMO_MODE=false` (must be the string `"false"`)
+
+2. **Check Vercel Logs:**
+   - Go to Vercel Dashboard → Your Project → Deployments → Click on latest deployment → Functions tab
+   - Look for logs showing:
+     - `Twilio Config Check` - Should show all variables as `true`
+     - `Twilio Status` - Should show `willSendSMS: true`
+
+3. **Verify Twilio Configuration:**
+   - Make sure your Twilio phone number is verified and can send SMS
+   - Check Twilio console for any errors or restrictions
+
+4. **Redeploy After Changes:**
+   - After adding/updating environment variables, you must redeploy
+   - Go to Deployments → Click "..." → Redeploy
+
+### Common Issues
+
+**Issue:** SMS not sending, but works locally
+- **Solution:** Check `DEMO_MODE` is set to `false` in Vercel (not `true` or missing)
+
+**Issue:** "Twilio not configured" error
+- **Solution:** Verify all three Twilio environment variables are set in Vercel
+
+**Issue:** MongoDB connection errors
+- **Solution:** Add Vercel IP ranges to MongoDB Atlas whitelist, or use `0.0.0.0/0`
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

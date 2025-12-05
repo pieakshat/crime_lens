@@ -10,6 +10,7 @@ interface TimePattern {
     crimeType: string;
     probability: number;
     description: string;
+    averageTime?: string; // Format: "HH:MM AM/PM"
 }
 
 interface DayPattern {
@@ -31,9 +32,10 @@ export interface CrimePrediction {
 }
 
 /**
- * Get time of day category from hour (0-23)
+ * Get time of day category from hour (decimal hours, e.g., 1.5 = 1:30 AM)
  */
-function getTimeCategory(hour: number): string {
+function getTimeCategory(timeInHours: number): string {
+    const hour = Math.floor(timeInHours) % 24;
     if (hour >= 22 || hour < 4) return 'Night (10 PM - 4 AM)';
     if (hour >= 4 && hour < 8) return 'Early Morning (4 AM - 8 AM)';
     if (hour >= 8 && hour < 12) return 'Morning (8 AM - 12 PM)';
@@ -62,6 +64,16 @@ function getDayType(dateStr: string): string {
 }
 
 /**
+ * Format hour (0-23) to time string (HH:MM AM/PM)
+ */
+function formatTime(hour: number, minute: number = 0): string {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const displayMinute = minute.toString().padStart(2, '0');
+    return `${displayHour}:${displayMinute} ${period}`;
+}
+
+/**
  * Analyze crime patterns and generate predictions
  */
 export function analyzeCrimePatterns(crimes: CrimeRecord[]): CrimePrediction {
@@ -69,20 +81,25 @@ export function analyzeCrimePatterns(crimes: CrimeRecord[]): CrimePrediction {
         return getDefaultPrediction();
     }
 
-    // Group crimes by time category
-    const timeCategoryCrimes = new Map<string, Map<string, number>>();
+    // Group crimes by time category with time tracking
+    const timeCategoryCrimes = new Map<string, Map<string, { count: number; times: number[] }>>();
     const dayTypeCrimes = new Map<string, Map<string, number>>();
 
     crimes.forEach((crime) => {
         const timeCat = getTimeCategory(crime.time);
         const dayType = getDayType(crime.date);
 
-        // Count by time category
+        // Count by time category with time tracking
         if (!timeCategoryCrimes.has(timeCat)) {
             timeCategoryCrimes.set(timeCat, new Map());
         }
         const timeMap = timeCategoryCrimes.get(timeCat)!;
-        timeMap.set(crime.crime, (timeMap.get(crime.crime) || 0) + 1);
+        if (!timeMap.has(crime.crime)) {
+            timeMap.set(crime.crime, { count: 0, times: [] });
+        }
+        const crimeData = timeMap.get(crime.crime)!;
+        crimeData.count += 1;
+        crimeData.times.push(crime.time);
 
         // Count by day type
         if (!dayTypeCrimes.has(dayType)) {
@@ -99,26 +116,42 @@ export function analyzeCrimePatterns(crimes: CrimeRecord[]): CrimePrediction {
         crimeType: 'THEFT',
         probability: 0.3,
         description: 'Crimes are most common during night hours',
+        averageTime: '10:37 PM',
     };
 
     timeCategoryCrimes.forEach((crimeMap, timeRange) => {
         let maxCount = 0;
         let mostCommonCrime = '';
+        let crimeTimes: number[] = [];
 
-        crimeMap.forEach((count, crime) => {
-            if (count > maxCount) {
-                maxCount = count;
+        crimeMap.forEach((crimeData, crime) => {
+            if (crimeData.count > maxCount) {
+                maxCount = crimeData.count;
                 mostCommonCrime = crime;
+                crimeTimes = crimeData.times;
             }
         });
 
         const probability = maxCount / crimes.length;
         if (probability > mostLikelyTime.probability) {
+            // Calculate average time from decimal hours
+            let averageTime: string | undefined;
+            if (crimeTimes.length > 0) {
+                const avgTimeInHours = crimeTimes.reduce((sum, time) => sum + time, 0) / crimeTimes.length;
+                const hour = Math.floor(avgTimeInHours) % 24;
+                const minute = Math.round((avgTimeInHours - Math.floor(avgTimeInHours)) * 60);
+                // Ensure minute is between 0-59
+                const finalMinute = minute >= 60 ? minute % 60 : minute;
+                const finalHour = minute >= 60 ? (hour + 1) % 24 : hour;
+                averageTime = formatTime(finalHour, finalMinute);
+            }
+
             mostLikelyTime = {
                 timeRange,
                 crimeType: mostCommonCrime,
                 probability: Math.min(probability * 2, 0.9), // Scale up for readability
-                description: `${mostCommonCrime} is most likely during ${timeRange}`,
+                description: `${mostCommonCrime} is most likely during ${timeRange}${averageTime ? ` at an average time of ${averageTime}` : ''}`,
+                averageTime,
             };
         }
     });
@@ -161,9 +194,9 @@ export function analyzeCrimePatterns(crimes: CrimeRecord[]): CrimePrediction {
     if (nightCrimes && nightCrimes.size > 0) {
         let maxNightCrime = '';
         let maxNightCount = 0;
-        nightCrimes.forEach((count, crime) => {
-            if (count > maxNightCount) {
-                maxNightCount = count;
+        nightCrimes.forEach((crimeData, crime) => {
+            if (crimeData.count > maxNightCount) {
+                maxNightCount = crimeData.count;
                 maxNightCrime = crime;
             }
         });
@@ -225,10 +258,11 @@ export function analyzeCrimePatterns(crimes: CrimeRecord[]): CrimePrediction {
 function getDefaultPrediction(): CrimePrediction {
     return {
         mostLikelyTime: {
-            timeRange: 'Night (10 PM - 4 AM) average time of 10:37 PM',
+            timeRange: 'Night (10 PM - 4 AM)',
             crimeType: 'THEFT',
             probability: 0.4,
-            description: 'Crimes are most common during night hours',
+            description: 'Crimes are most common during night hours at an average time of 10:37 PM',
+            averageTime: '10:37 PM',
         },
         mostLikelyDay: {
             dayType: 'Weekend',

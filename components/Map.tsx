@@ -234,9 +234,12 @@ export default function Map({ features, onCitySelect, selectedCity, intensityPer
                             <>
                                 <br />
                                 <br />
-                                <strong>Prediction:</strong>
+                                <strong>🔮 Prediction:</strong>
                                 <br />
                                 {props.prediction.mostLikelyTime.crimeType} likely during {props.prediction.mostLikelyTime.timeRange}
+                                {props.prediction.mostLikelyTime.averageTime && (
+                                    <> at {props.prediction.mostLikelyTime.averageTime}</>
+                                )}
                             </>
                         )}
                     </>

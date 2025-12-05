@@ -230,6 +230,15 @@ export default function Map({ features, onCitySelect, selectedCity, intensityPer
                         Crimes: {props.count}
                         <br />
                         Top Crimes: {props.top_crimes ? props.top_crimes.map((c) => c.crime).slice(0, 3).join(', ') : 'N/A'}
+                        {props.prediction && (
+                            <>
+                                <br />
+                                <br />
+                                <strong>Prediction:</strong>
+                                <br />
+                                {props.prediction.mostLikelyTime.crimeType} likely during {props.prediction.mostLikelyTime.timeRange}
+                            </>
+                        )}
                     </>
                 );
 

@@ -33,6 +33,8 @@ export interface VerifyOTPResponse {
     error?: string;
 }
 
+import { CrimePrediction } from './crime-prediction';
+
 export interface CityProperties {
     city: string;
     area?: string;
@@ -43,6 +45,7 @@ export interface CityProperties {
     intensity_score: number;
     top_crimes: Array<{ crime: string; count: number }>;
     sample_records: Array<Record<string, any>>;
+    prediction?: CrimePrediction;
 }
 
 export interface GeoJSONFeature {

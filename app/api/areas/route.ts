@@ -3,6 +3,7 @@ import { parse } from 'csv-parse/sync';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { CityProperties, GeoJSONResponse } from '@/lib/api';
+import { analyzeCrimePatterns } from '@/lib/crime-prediction';
 
 interface CSVRow {
     City: string;
@@ -36,6 +37,7 @@ export async function GET() {
                 crime: string;
                 severity: number;
                 date: string;
+                time: number;
                 lat: number;
                 lon: number;
             }>;
@@ -74,10 +76,16 @@ export async function GET() {
             const recordLat = (lat && !isNaN(lat)) ? lat : (data.coordCount > 0 ? data.latSum / data.coordCount : 0);
             const recordLon = (lon && !isNaN(lon)) ? lon : (data.coordCount > 0 ? data.lonSum / data.coordCount : 0);
 
+            // Parse time (format: HH.MM or HH:MM)
+            const timeStr = record['Time.of.Occurrence'] || '0';
+            const timeValue = parseFloat(timeStr.replace(':', '.'));
+            const hour = Math.floor(timeValue);
+
             data.crimes.push({
                 crime: record.Crime || 'Unknown',
                 severity,
                 date: record['Date.of.Occurrence'] || '',
+                time: hour,
                 lat: recordLat,
                 lon: recordLon,
             });
@@ -122,6 +130,15 @@ export async function GET() {
                 'Date.of.Occurrence': c.date,
             }));
 
+            // Generate crime predictions
+            const crimeRecords = data.crimes.map(c => ({
+                crime: c.crime,
+                date: c.date,
+                time: c.time,
+                severity: c.severity,
+            }));
+            const prediction = analyzeCrimePatterns(crimeRecords);
+
             const properties: CityProperties = {
                 city,
                 latitude: avgLat,
@@ -131,6 +148,7 @@ export async function GET() {
                 intensity_score: Math.round(intensityScore * 100) / 100,
                 top_crimes: topCrimes,
                 sample_records: sampleRecords,
+                prediction,
             };
 
             features.push({

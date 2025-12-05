@@ -120,6 +120,57 @@ export default function Sidebar({
                 </div>
             </div>
 
+            {selectedCity?.prediction && (
+                <div className="mb-8 pb-5 border-b border-gray-700">
+                    <h2 className="text-xl mb-4 uppercase tracking-wide">🔮 Crime Prediction</h2>
+                    <div className="text-sm leading-relaxed space-y-4">
+                        <div className="bg-yellow-900/30 border border-yellow-600/50 p-3 rounded">
+                            <p className="font-bold text-yellow-400 mb-2">Most Likely Time:</p>
+                            <p className="text-xs mb-1">
+                                <span className="font-semibold">{selectedCity.prediction.mostLikelyTime.crimeType}</span> is most likely during{' '}
+                                <span className="font-semibold">{selectedCity.prediction.mostLikelyTime.timeRange}</span>
+                            </p>
+                            <p className="text-xs text-gray-400">
+                                Probability: {Math.round(selectedCity.prediction.mostLikelyTime.probability * 100)}%
+                            </p>
+                        </div>
+
+                        <div className="bg-orange-900/30 border border-orange-600/50 p-3 rounded">
+                            <p className="font-bold text-orange-400 mb-2">Most Likely Day:</p>
+                            <p className="text-xs mb-1">
+                                <span className="font-semibold">{selectedCity.prediction.mostLikelyDay.crimeType}</span> is more common on{' '}
+                                <span className="font-semibold">{selectedCity.prediction.mostLikelyDay.dayType}s</span>
+                            </p>
+                            <p className="text-xs text-gray-400">
+                                Probability: {Math.round(selectedCity.prediction.mostLikelyDay.probability * 100)}%
+                            </p>
+                        </div>
+
+                        {selectedCity.prediction.highRiskPeriods.length > 0 && (
+                            <div className="bg-red-900/30 border border-red-600/50 p-3 rounded">
+                                <p className="font-bold text-red-400 mb-2">⚠️ High-Risk Periods:</p>
+                                <ul className="list-disc ml-4 text-xs space-y-1">
+                                    {selectedCity.prediction.highRiskPeriods.map((period, idx) => (
+                                        <li key={idx}>
+                                            <span className="font-semibold">{period.period}</span>: {period.crimeType} ({period.riskLevel} Risk)
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        <div className="bg-blue-900/30 border border-blue-600/50 p-3 rounded">
+                            <p className="font-bold text-blue-400 mb-2">💡 Safety Recommendations:</p>
+                            <ul className="list-disc ml-4 text-xs space-y-1">
+                                {selectedCity.prediction.recommendations.map((rec, idx) => (
+                                    <li key={idx}>{rec}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="mb-8 pb-5 border-b border-gray-700">
                 <h2 className="text-xl mb-4 uppercase tracking-wide">Heatmap Legend</h2>
                 <div className="flex flex-col gap-3">

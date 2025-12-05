@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Polygon, useMap, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.heat';
 import { GeoJSONFeature } from '@/lib/api';
 
 interface MapProps {
@@ -15,6 +16,79 @@ interface MapProps {
         top_50: number;
         top_80: number;
     };
+}
+
+// Heatmap layer component
+function HeatmapLayer({
+    features,
+    intensityPercentiles,
+}: {
+    features: GeoJSONFeature[];
+    intensityPercentiles: { top_20: number; top_50: number; top_80: number };
+}) {
+    const map = useMap();
+    const heatLayerRef = useRef<L.HeatLayer | null>(null);
+
+    useEffect(() => {
+        if (features.length === 0) return;
+
+        // Prepare heatmap data: [lat, lon, intensity]
+        const heatData: [number, number, number][] = features
+            .map((feature) => {
+                const props = feature.properties;
+                const intensityScore = props.intensity_score || 0;
+
+                // Normalize intensity score for heatmap (0-1 range)
+                const maxIntensity = intensityPercentiles.top_20 || 1;
+                const normalizedIntensity = Math.min(intensityScore / maxIntensity, 1) * 100;
+
+                if (feature.geometry.type === 'Point') {
+                    const coords = feature.geometry.coordinates as number[];
+                    const lat = props.latitude || coords[1];
+                    const lon = props.longitude || coords[0];
+                    if (lat && lon) {
+                        return [lat, lon, normalizedIntensity] as [number, number, number];
+                    }
+                }
+                return null;
+            })
+            .filter((point): point is [number, number, number] => point !== null);
+
+        // Remove existing heat layer if present
+        if (heatLayerRef.current) {
+            map.removeLayer(heatLayerRef.current);
+        }
+
+        // Create new heat layer
+        if (heatData.length > 0) {
+            const heatLayer = (L as any).heatLayer(heatData, {
+                radius: 25,
+                blur: 15,
+                maxZoom: 17,
+                max: 100,
+                gradient: {
+                    0.0: 'blue',
+                    0.2: 'cyan',
+                    0.4: 'lime',
+                    0.6: 'yellow',
+                    0.8: 'orange',
+                    1.0: 'red',
+                },
+            });
+
+            heatLayer.addTo(map);
+            heatLayerRef.current = heatLayer;
+        }
+
+        // Cleanup on unmount
+        return () => {
+            if (heatLayerRef.current) {
+                map.removeLayer(heatLayerRef.current);
+            }
+        };
+    }, [features, intensityPercentiles, map]);
+
+    return null;
 }
 
 function MapController({
@@ -139,6 +213,7 @@ export default function Map({ features, onCitySelect, selectedCity, intensityPer
                 maxZoom={19}
             />
             <MapController features={features} selectedCity={selectedCity} />
+            <HeatmapLayer features={features} intensityPercentiles={intensityPercentiles} />
 
             {features.map((feature, index) => {
                 const props = feature.properties;

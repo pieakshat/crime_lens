@@ -15,6 +15,7 @@ export interface SendOTPResponse {
 export interface VerifyOTPRequest {
     phone: string;
     otp: string;
+    username?: string;
     email?: string;
     guardian_phone?: string;
 }
@@ -24,6 +25,7 @@ export interface VerifyOTPResponse {
     message?: string;
     user?: {
         phone: string;
+        username?: string;
         email?: string;
         guardian_phone?: string;
         verified: boolean;
@@ -116,11 +118,19 @@ export async function verifyOTP(data: VerifyOTPRequest): Promise<VerifyOTPRespon
     return response.json();
 }
 
-// TODO: Migrate these endpoints to Next.js API routes
-// For now, these will need to be implemented later
 export async function getAreas(): Promise<GeoJSONResponse> {
-    // TODO: Create /api/areas route
-    throw new Error('Not implemented yet - needs Next.js API route');
+    const response = await fetch('/api/areas', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to get areas: ${response.statusText}`);
+    }
+
+    return response.json();
 }
 
 export async function getArea(city: string): Promise<CityProperties> {
@@ -129,11 +139,38 @@ export async function getArea(city: string): Promise<CityProperties> {
 }
 
 export async function sendSOS(data: SOSRequest): Promise<SOSResponse> {
-    // TODO: Create /api/sos route
-    throw new Error('Not implemented yet - needs Next.js API route');
+    const response = await fetch('/api/sos', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to send SOS: ${response.statusText}`);
+    }
+
+    return response.json();
 }
 
 export async function checkAlert(data: CheckAlertRequest): Promise<CheckAlertResponse> {
-    // TODO: Create /api/check-alert route
-    throw new Error('Not implemented yet - needs Next.js API route');
+    const response = await fetch('/api/check-alert', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to check alert: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return {
+        should_alert: result.should_alert,
+        city_data: result.city_data,
+        top_50_threshold: result.top_50_threshold,
+    };
 }

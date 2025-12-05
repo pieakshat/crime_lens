@@ -1,61 +1,100 @@
 /**
  * Server-side storage for OTP and user data
  * 
- * NOTE: This uses in-memory storage which is fine for development.
- * For production, replace with Redis or a database.
+ * Uses MongoDB for persistent storage.
  */
 
-interface OtpData {
+import {
+    storeOTP as dbStoreOTP,
+    getOTP as dbGetOTP,
+    deleteOTP as dbDeleteOTP,
+    storeUser as dbStoreUser,
+    getUser as dbGetUser,
+    getAllUsers as dbGetAllUsers,
+    cleanupExpiredOTPs,
+    OtpDocument,
+    UserDocument,
+} from './db-models';
+
+// Re-export types for backward compatibility
+export interface OtpData {
     otp: string;
     expiresAt: Date;
 }
 
-interface UserData {
+export interface UserData {
     phone: string;
+    username?: string;
     email?: string;
     guardian_phone?: string;
     verified: boolean;
 }
 
-// Shared in-memory storage
-const otpStorage: Record<string, OtpData> = {};
-const users: Record<string, UserData> = {};
-
-// Clean up expired OTPs periodically
+// Clean up expired OTPs periodically (every 5 minutes)
 if (typeof setInterval !== 'undefined') {
-    setInterval(() => {
-        const now = new Date();
-        Object.keys(otpStorage).forEach((phone) => {
-            if (otpStorage[phone].expiresAt < now) {
-                delete otpStorage[phone];
+    setInterval(async () => {
+        try {
+            const deletedCount = await cleanupExpiredOTPs();
+            if (deletedCount > 0) {
+                console.log(`[${new Date().toISOString()}] 🧹 Cleaned up ${deletedCount} expired OTP(s)`);
             }
-        });
-    }, 60000); // Clean up every minute
+        } catch (error) {
+            console.error(`[${new Date().toISOString()}] ❌ Error cleaning up expired OTPs:`, error);
+        }
+    }, 5 * 60000); // Every 5 minutes
 }
 
-export function storeOTP(phone: string, otp: string, expiresInMinutes: number = 10): void {
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + expiresInMinutes);
-    otpStorage[phone] = { otp, expiresAt };
+// OTP functions - MongoDB backed
+export async function storeOTP(phone: string, otp: string, expiresInMinutes: number = 10): Promise<void> {
+    await dbStoreOTP(phone, otp, expiresInMinutes);
 }
 
-export function getOTP(phone: string): OtpData | null {
-    return otpStorage[phone] || null;
+export async function getOTP(phone: string): Promise<OtpData | null> {
+    const otpDoc = await dbGetOTP(phone);
+    if (!otpDoc) return null;
+
+    return {
+        otp: otpDoc.otp,
+        expiresAt: otpDoc.expiresAt,
+    };
 }
 
-export function deleteOTP(phone: string): void {
-    delete otpStorage[phone];
+export async function deleteOTP(phone: string): Promise<void> {
+    await dbDeleteOTP(phone);
 }
 
-export function storeUser(data: UserData): void {
-    users[data.phone] = data;
+// User functions - MongoDB backed
+export async function storeUser(data: UserData): Promise<void> {
+    await dbStoreUser(data);
 }
 
-export function getUser(phone: string): UserData | null {
-    return users[phone] || null;
+export async function getUser(phone: string): Promise<UserData | null> {
+    const userDoc = await dbGetUser(phone);
+    if (!userDoc) return null;
+
+    return {
+        phone: userDoc.phone,
+        username: userDoc.username,
+        email: userDoc.email,
+        guardian_phone: userDoc.guardian_phone,
+        verified: userDoc.verified,
+    };
 }
 
-export function getAllUsers(): Record<string, UserData> {
-    return users;
+export async function getAllUsers(): Promise<Record<string, UserData>> {
+    const users = await dbGetAllUsers();
+    const result: Record<string, UserData> = {};
+
+    users.forEach((userDoc) => {
+        result[userDoc.phone] = {
+            phone: userDoc.phone,
+            username: userDoc.username,
+            email: userDoc.email,
+            guardian_phone: userDoc.guardian_phone,
+            verified: userDoc.verified,
+        };
+    });
+
+    return result;
 }
 

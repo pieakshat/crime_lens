@@ -28,6 +28,9 @@ export default function Sidebar({
                     {userData ? (
                         <>
                             <p className="mb-2">
+                                <strong>Username:</strong> {userData.username || 'Not set'}
+                            </p>
+                            <p className="mb-2">
                                 <strong>Phone:</strong> {userData.phone}
                             </p>
                             <p className="mb-2">

@@ -2,12 +2,14 @@
 
 export interface UserData {
     phone: string;
+    username?: string;
     email?: string;
     guardian_phone?: string;
 }
 
 const STORAGE_KEYS = {
     USER_PHONE: 'userPhone',
+    USERNAME: 'username',
     USER_EMAIL: 'userEmail',
     GUARDIAN_PHONE: 'guardianPhone',
 } as const;
@@ -20,6 +22,7 @@ export function getUserData(): UserData | null {
 
     return {
         phone,
+        username: sessionStorage.getItem(STORAGE_KEYS.USERNAME) || undefined,
         email: sessionStorage.getItem(STORAGE_KEYS.USER_EMAIL) || undefined,
         guardian_phone: sessionStorage.getItem(STORAGE_KEYS.GUARDIAN_PHONE) || undefined,
     };
@@ -29,6 +32,9 @@ export function setUserData(data: UserData): void {
     if (typeof window === 'undefined') return;
 
     sessionStorage.setItem(STORAGE_KEYS.USER_PHONE, data.phone);
+    if (data.username) {
+        sessionStorage.setItem(STORAGE_KEYS.USERNAME, data.username);
+    }
     if (data.email) {
         sessionStorage.setItem(STORAGE_KEYS.USER_EMAIL, data.email);
     }
@@ -41,6 +47,7 @@ export function clearUserData(): void {
     if (typeof window === 'undefined') return;
 
     sessionStorage.removeItem(STORAGE_KEYS.USER_PHONE);
+    sessionStorage.removeItem(STORAGE_KEYS.USERNAME);
     sessionStorage.removeItem(STORAGE_KEYS.USER_EMAIL);
     sessionStorage.removeItem(STORAGE_KEYS.GUARDIAN_PHONE);
 }

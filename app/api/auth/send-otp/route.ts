@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
                 // Fallback to demo mode if Twilio fails
                 const otp = Math.floor(100000 + Math.random() * 900000).toString();
-                storeOTP(phone, otp, 10);
+                await storeOTP(phone, otp, 10);
 
                 return NextResponse.json(
                     {
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
             console.log(`[${new Date().toISOString()}] 🔐 Generated OTP for ${phone.replace(/(.{3})(.*)(.{4})/, '$1***$3')}`);
 
             // Store OTP with 10-minute expiration for demo mode
-            storeOTP(phone, otp, 10);
+            await storeOTP(phone, otp, 10);
 
             console.log(`[${new Date().toISOString()}] 🎭 Demo mode - OTP generated but not sent (${Date.now() - startTime}ms)`);
             return NextResponse.json({

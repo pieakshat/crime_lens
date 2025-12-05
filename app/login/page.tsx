@@ -7,6 +7,7 @@ import { setUserData } from '@/lib/storage';
 
 export default function LoginPage() {
     const router = useRouter();
+    const [username, setUsername] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
     const [guardianPhone, setGuardianPhone] = useState('');
@@ -75,6 +76,7 @@ export default function LoginPage() {
             const response = await verifyOTP({
                 phone: phone.trim(),
                 otp: otp.trim(),
+                username: username.trim() || undefined,
                 email: email.trim() || undefined,
                 guardian_phone: guardianPhone.trim() || undefined,
             });
@@ -82,6 +84,7 @@ export default function LoginPage() {
             if (response.success && response.user) {
                 setUserData({
                     phone: response.user.phone,
+                    username: response.user.username,
                     email: response.user.email,
                     guardian_phone: response.user.guardian_phone,
                 });
@@ -110,6 +113,20 @@ export default function LoginPage() {
                 </div>
 
                 <form onSubmit={handleSendOTP}>
+                    <div className="mb-5">
+                        <label htmlFor="username" className="block mb-2 text-sm font-medium">
+                            Username
+                        </label>
+                        <input
+                            type="text"
+                            id="username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="your_username"
+                            className="w-full p-3 bg-black border border-white text-white text-base rounded focus:outline-none focus:ring-2 focus:ring-white/20"
+                        />
+                    </div>
+
                     <div className="mb-5">
                         <label htmlFor="phone" className="block mb-2 text-sm font-medium">
                             Phone Number *

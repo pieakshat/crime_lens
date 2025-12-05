@@ -21,7 +21,7 @@ export default function WarningPopup({
     if (areaName) {
         message = `You have entered ${areaName}.\n\nSeverity: ${severity}\n`;
     }
-    message += `\nCommon crimes: ${crimes}\n\nStay alert and be cautious.`;
+    message += `\nCommon crimes: ${crimes}\n\n🚨 An SOS alert has been automatically sent to you and your guardian.\n\nStay alert and be cautious.`;
 
     return (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black border-4 border-white p-8 z-[10000] max-w-lg w-[90%] text-center">

@@ -91,6 +91,11 @@ export default function DashboardPage() {
             return;
         }
 
+        if (!userData) {
+            alert('Please log in first');
+            return;
+        }
+
         const props = selectedCity;
         const shouldAlert =
             props.avg_severity >= 2 ||
@@ -101,12 +106,36 @@ export default function DashboardPage() {
                 ? props.top_crimes.map((c) => c.crime).slice(0, 3).join(', ')
                 : 'Various';
             const areaName = props.area || props.city || 'Area';
+
+            // Show warning popup
             setWarning({
                 show: true,
                 severity: props.avg_severity,
                 crimes: topCrimes,
                 areaName,
             });
+
+            // Automatically send SOS alert
+            try {
+                console.log(`[${new Date().toISOString()}] 🚨 Auto-sending SOS for severe zone: ${props.city}`);
+                const sosResponse = await sendSOS({
+                    user_phone: userData.phone,
+                    city: props.city,
+                });
+
+                if (sosResponse.success) {
+                    if (sosResponse.demo) {
+                        console.log('SOS alert prepared (Demo Mode)');
+                    } else {
+                        console.log(`SOS alert sent - User SMS: ${sosResponse.user_sms_sent}, Guardian SMS: ${sosResponse.guardian_sms_sent}`);
+                    }
+                } else {
+                    console.error('Failed to send SOS:', sosResponse.error);
+                }
+            } catch (error) {
+                console.error('Error sending SOS:', error);
+                // Don't show error to user, just log it
+            }
         }
     };
 

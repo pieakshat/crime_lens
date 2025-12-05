@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     try {
         const body = await request.json();
-        const { phone, otp, email, guardian_phone } = body;
+        const { phone, otp, username, email, guardian_phone } = body;
 
         console.log(`[${new Date().toISOString()}] 🔍 POST /api/auth/verify-otp - Phone: ${phone ? phone.replace(/(.{3})(.*)(.{4})/, '$1***$3') : 'N/A'}, OTP: ${otp ? '****' : 'N/A'}`);
 
@@ -24,11 +24,12 @@ export async function POST(request: NextRequest) {
             console.log(`[${new Date().toISOString()}] 🎭 Demo mode OTP verified for ${phone.replace(/(.{3})(.*)(.{4})/, '$1***$3')}`);
             const userData = {
                 phone,
+                username: username || undefined,
                 email: email || undefined,
                 guardian_phone: guardian_phone || undefined,
                 verified: true,
             };
-            storeUser(userData);
+            await storeUser(userData);
             console.log(`[${new Date().toISOString()}] ✅ User verified (Demo Mode) (${Date.now() - startTime}ms)`);
             return NextResponse.json({
                 success: true,
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
                         guardian_phone: guardian_phone || undefined,
                         verified: true,
                     };
-                    storeUser(userData);
+                    await storeUser(userData);
 
                     return NextResponse.json({
                         success: true,
@@ -86,24 +87,25 @@ export async function POST(request: NextRequest) {
                 console.error(`[${new Date().toISOString()}] ❌ Twilio Verify error:`, twilioError.message || twilioError);
 
                 // Fallback to local OTP storage if Twilio fails
-                const storedOtpData = getOTP(phone);
+                const storedOtpData = await getOTP(phone);
                 if (storedOtpData && storedOtpData.otp === otp) {
                     if (new Date() > storedOtpData.expiresAt) {
-                        deleteOTP(phone);
+                        await deleteOTP(phone);
                         return NextResponse.json(
                             { success: false, error: 'OTP expired' },
                             { status: 400 }
                         );
                     }
 
-                    deleteOTP(phone);
+                    await deleteOTP(phone);
                     const userData = {
                         phone,
+                        username: username || undefined,
                         email: email || undefined,
                         guardian_phone: guardian_phone || undefined,
                         verified: true,
                     };
-                    storeUser(userData);
+                    await storeUser(userData);
 
                     console.log(`[${new Date().toISOString()}] ✅ OTP verified via fallback storage (${Date.now() - startTime}ms)`);
                     return NextResponse.json({
@@ -120,7 +122,7 @@ export async function POST(request: NextRequest) {
             }
         } else {
             // Twilio not configured - use local storage
-            const storedOtpData = getOTP(phone);
+            const storedOtpData = await getOTP(phone);
             if (!storedOtpData) {
                 console.log(`[${new Date().toISOString()}] ❌ OTP not found or expired for ${phone.replace(/(.{3})(.*)(.{4})/, '$1***$3')}`);
                 return NextResponse.json(
@@ -132,7 +134,7 @@ export async function POST(request: NextRequest) {
             // Check if OTP expired
             if (new Date() > storedOtpData.expiresAt) {
                 console.log(`[${new Date().toISOString()}] ⏰ OTP expired for ${phone.replace(/(.{3})(.*)(.{4})/, '$1***$3')}`);
-                deleteOTP(phone);
+                await deleteOTP(phone);
                 return NextResponse.json(
                     { success: false, error: 'OTP expired' },
                     { status: 400 }
@@ -149,15 +151,16 @@ export async function POST(request: NextRequest) {
             }
 
             // OTP verified - remove it and create user session
-            deleteOTP(phone);
+            await deleteOTP(phone);
 
             const userData = {
                 phone,
+                username: username || undefined,
                 email: email || undefined,
                 guardian_phone: guardian_phone || undefined,
                 verified: true,
             };
-            storeUser(userData);
+            await storeUser(userData);
 
             console.log(`[${new Date().toISOString()}] ✅ OTP verified successfully for ${phone.replace(/(.{3})(.*)(.{4})/, '$1***$3')} (${Date.now() - startTime}ms)`);
 
